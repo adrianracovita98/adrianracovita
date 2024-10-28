@@ -5,7 +5,7 @@ import seaborn as sns
 import plotly.express as px
 
 # Define a password
-PASSWORD = "1234"
+PASSWORD = "7#Gz8!qW3r%Yl2&Sn9x$Kd@5V"
 
 # Create a function to check the password
 def check_password():
