@@ -206,15 +206,19 @@ def initialize_answer_log():
 
 # Function to record an answer in the Excel log
 def record_answer(user_name, topic, question, user_answer, correct_answer, is_correct):
-    if os.path.exists(ANSWER_LOG_FILE):
-        # Load the existing Excel file
-        df = pd.read_excel(ANSWER_LOG_FILE)
-    else:
-        # Create a new DataFrame with the required columns if the file doesn't exist
-        df = pd.DataFrame(columns=[
-            "Timestamp", "User Name", "Topic", "Question", "User Answer",
-            "Correct Answer", "Is Correct"
-        ])
+    """
+    Record the user's answer in the Excel log file.
+
+    Args:
+        user_name (str): The name of the user.
+        topic (str): The selected topic (e.g., "PNH").
+        question (str): The question being answered.
+        user_answer (str): The answer provided by the user.
+        correct_answer (str): The correct answer.
+        is_correct (bool): Whether the user's answer is correct.
+    """
+    # Define the column names
+    columns = ["Timestamp", "User Name", "Topic", "Question", "User Answer", "Correct Answer", "Is Correct"]
 
     # Create a new row as a DataFrame
     new_row = pd.DataFrame([{
@@ -227,11 +231,18 @@ def record_answer(user_name, topic, question, user_answer, correct_answer, is_co
         "Is Correct": is_correct
     }])
 
-    # Concatenate the new row to the existing DataFrame
-    df = pd.concat([df, new_row], ignore_index=True)
+    # Check if the Excel file already exists
+    if os.path.exists(ANSWER_LOG_FILE):
+        # Load the existing Excel file
+        existing_df = pd.read_excel(ANSWER_LOG_FILE)
+        # Concatenate the new row with the existing data
+        updated_df = pd.concat([existing_df, new_row], ignore_index=True)
+    else:
+        # If the file doesn't exist, create a new DataFrame with the new row
+        updated_df = new_row
 
     # Save the updated DataFrame back to the Excel file
-    df.to_excel(ANSWER_LOG_FILE, index=False)
+    updated_df.to_excel(ANSWER_LOG_FILE, index=False)
     
 def get_randomized_questions(topic_questions):
     return random.sample(topic_questions, len(topic_questions))
