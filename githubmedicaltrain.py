@@ -269,6 +269,8 @@ def initialize_session_state():
             {"name": "Alice", "score": 8},
             {"name": "Bob", "score": 7}
         ]
+    if "user_name" not in st.session_state:
+        st.session_state.user_name = None  # Initialize user_name as None initially
 
 # Call this function to initialize the session state on app start
 initialize_session_state()
@@ -284,13 +286,20 @@ def main():
 
     # User login and collaboration
     st.sidebar.subheader("Collaborate")
-    user_name = st.sidebar.text_input("Enter your name:", placeholder="Your Name")
-    if user_name:
-        st.sidebar.write(f"Welcome, **{user_name}**! Ready to challenge yourself?")
+    user_name_input = st.sidebar.text_input("Enter your name:", placeholder="Your Name")
+
+    # Store user_name in session state once entered
+    if user_name_input:
+        st.session_state.user_name = user_name_input
+        st.sidebar.write(f"Welcome, **{st.session_state.user_name}**! Ready to challenge yourself?")
         with st.sidebar.expander("💬 Leave a Comment"):
             comment = st.text_area("Your comment", placeholder="Share your thoughts...")
             if st.button("Submit Comment"):
-                st.sidebar.write(f"**{user_name} says:** {comment}")
+                st.sidebar.write(f"**{st.session_state.user_name} says:** {comment}")
+    
+    if not st.session_state.user_name:
+        st.sidebar.warning("Please enter your name to start.")
+        return  # Exit early if user_name is not set
 
     # Reset when the topic changes
     if selected_topic != st.session_state.selected_topic:
@@ -339,7 +348,7 @@ def main():
 
                     # Call the record_answer function to save the response to the file
                     record_answer_csv(
-                        user_name=user_name,
+                        user_name=st.session_state.user_name,
                         topic=st.session_state.selected_topic,
                         question=question_data["question"],
                         user_answer=user_answer,
@@ -390,8 +399,6 @@ def main():
                     st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
                     st.markdown(f"- **Feedback:** {entry['feedback']}")
                     st.markdown("---")
-                else:
-                    st.warning(f"Skipping invalid history entry at index {idx}.")
         else:
             st.info("No answers have been submitted yet.")
 
