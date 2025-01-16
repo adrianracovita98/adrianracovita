@@ -274,66 +274,61 @@ def main():
     # Reset when the topic changes
     if selected_topic != st.session_state.selected_topic:
         st.session_state.selected_topic = selected_topic
-        # Shuffle and store the questions for this topic
-        st.session_state.shuffled_questions = get_randomized_questions(scenarios[selected_topic])
-        st.session_state.current_question_index = 0  # Start at the first question
-        st.session_state.history = []
-        st.session_state.score = 0
-        st.session_state.question_count = 0
+        st.session_state.shuffled_questions = random.sample(
+            scenarios[selected_topic], len(scenarios[selected_topic])
+        )  # Shuffle the questions for the new topic
+        st.session_state.current_question_index = 0  # Reset the question index
+        st.session_state.history = []  # Clear the history for the new topic
+        st.session_state.score = 0  # Reset the score
+        st.session_state.question_count = 0  # Reset the question count
+        st.session_state.show_next_question = False
 
     # Display a random question from the selected topic
-    if st.session_state.selected_topic:
-        # Generate a new question only if none is stored
-        if st.session_state.current_question is None:
-            st.session_state.current_question = random.choice(scenarios[st.session_state.selected_topic])
-            st.session_state.show_next_question = False
-
-        # Extract the current question
-        question_data = st.session_state.current_question
-
-        # Display the question and options
-        st.subheader(f"📋 Clinician Question: {question_data['question']}")
-        options = question_data["options"]
-        user_answer = st.radio("Select your answer:", options)
-
-        # Submit button to check the answer
-        if st.button("Submit Answer"):
-            if not st.session_state.show_next_question:
-                # Increment the question count
-                st.session_state.question_count += 1
-        
-                # Calculate if the user's answer is correct
-                is_correct = user_answer == question_data["answer"]
-        
-                # Check if the user's answer is correct
-                if is_correct:
-                    st.success("✅ Correct! Great job!")
-                    st.session_state.score += 1
-                else:
-                    st.error("❌ Incorrect. Keep improving!")
-        
-                # Append the question, user's answer, and feedback to the history
-                st.session_state.history.append({
-                    "question": question_data["question"],
-                    "your_answer": user_answer or "No answer submitted",  # Handle empty user answer
-                    "correct_answer": question_data["answer"],
-                    "feedback": question_data["feedback"],
-                    "is_correct": is_correct
-                })
-        
-                # Provide feedback
-                st.info(f"Feedback: {question_data['feedback']}")
-                st.info(f"The correct answer is: {question_data['answer']}")
-        
-                # Show the "Next Question" button
-                st.session_state.show_next_question = True
-
-        # Display the "Next Question" button after submission
-        if st.session_state.show_next_question:
-            if st.button("Next Question"):
-                # Clear the current question so that a new one can be generated
-                st.session_state.current_question = None
-                st.session_state.show_next_question = False
+    if st.session_state.shuffled_questions:
+        if st.session_state.current_question_index < len(st.session_state.shuffled_questions):
+            question_data = st.session_state.shuffled_questions[st.session_state.current_question_index]
+    
+            # Display the current question
+            st.subheader(f"📋 Clinician Question: {question_data['question']}")
+            options = question_data["options"]
+            user_answer = st.radio("Select your answer:", options)
+    
+            # Submit button to check the answer
+            if st.button("Submit Answer"):
+                if not st.session_state.show_next_question:
+                    # Increment the question count
+                    st.session_state.question_count += 1
+    
+                    # Check if the user's answer is correct
+                    is_correct = user_answer == question_data["answer"]
+                    if is_correct:
+                        st.success("✅ Correct! Great job!")
+                        st.session_state.score += 1
+                    else:
+                        st.error("❌ Incorrect. Keep improving!")
+    
+                    # Append the question, user's answer, and feedback to the history
+                    st.session_state.history.append({
+                        "question": question_data["question"],
+                        "your_answer": user_answer,
+                        "correct_answer": question_data["answer"],
+                        "feedback": question_data["feedback"],
+                        "is_correct": is_correct
+                    })
+    
+                    # Provide feedback
+                    st.info(f"Feedback: {question_data['feedback']}")
+                    st.info(f"The correct answer is: {question_data['answer']}")
+    
+                    # Show the "Next Question" button
+                    st.session_state.show_next_question = True
+    
+            # Display the "Next Question" button after submission
+            if st.session_state.show_next_question:
+                if st.button("Next Question"):
+                    # Move to the next question
+                    st.session_state.current_question_index += 1
+                    st.session_state.show_next_question = False
 
     # Display progress in the sidebar
    # st.sidebar.subheader("📊 Progress")
