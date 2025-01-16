@@ -231,18 +231,18 @@ def record_answer(user_name, topic, question, user_answer, correct_answer, is_co
         "Is Correct": is_correct
     }])
 
-    # Check if the Excel file already exists
-    if os.path.exists(ANSWER_LOG_FILE):
-        # Load the existing Excel file
-        existing_df = pd.read_excel(ANSWER_LOG_FILE)
-        # Concatenate the new row with the existing data
-        updated_df = pd.concat([existing_df, new_row], ignore_index=True)
-    else:
-        # If the file doesn't exist, create a new DataFrame with the new row
-        updated_df = new_row
+    try:
+        # Check if the Excel file already exists
+        if os.path.exists(ANSWER_LOG_FILE):
+            # Open the existing file and append the new row
+            with pd.ExcelWriter(ANSWER_LOG_FILE, mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
+                new_row.to_excel(writer, header=False, index=False, startrow=writer.sheets["Sheet1"].max_row)
+        else:
+            # Write a new Excel file with the new row
+            new_row.to_excel(ANSWER_LOG_FILE, index=False)
 
-    # Save the updated DataFrame back to the Excel file
-    updated_df.to_excel(ANSWER_LOG_FILE, index=False)
+    except Exception as e:
+        st.error(f"An error occurred while saving the answer: {e}")
     
 def get_randomized_questions(topic_questions):
     return random.sample(topic_questions, len(topic_questions))
