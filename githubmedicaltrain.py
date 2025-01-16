@@ -2,6 +2,7 @@ import random
 import streamlit as st
 import pandas as pd
 import os
+import csv
 from datetime import datetime
 
 # Path to the Excel file for logging
@@ -249,6 +250,7 @@ def record_answer_csv(user_name, topic, question, user_answer, correct_answer, i
 def get_randomized_questions(topic_questions):
     return random.sample(topic_questions, len(topic_questions))
 
+# Initialize session state variables
 # Initialize session state variables
 def initialize_session_state():
     if "score" not in st.session_state:
