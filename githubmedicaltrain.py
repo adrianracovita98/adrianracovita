@@ -249,8 +249,8 @@ def record_answer_csv(user_name, topic, question, user_answer, correct_answer, i
 def get_randomized_questions(topic_questions):
     return random.sample(topic_questions, len(topic_questions))
 
-def main():
-    # Initialize session state variables
+# Initialize session state variables
+def initialize_session_state():
     if "score" not in st.session_state:
         st.session_state.score = 0
     if "question_count" not in st.session_state:
@@ -264,22 +264,24 @@ def main():
     if "selected_topic" not in st.session_state:
         st.session_state.selected_topic = None
     if "leaderboard" not in st.session_state:
-    # Initialize leaderboard with mock data or an empty list
+        # Initialize leaderboard with mock data or an empty list
         st.session_state.leaderboard = [
             {"name": "Alice", "score": 8},
             {"name": "Bob", "score": 7}
-        ] 
+        ]
 
+# Call this function to initialize the session state on app start
+initialize_session_state()
+
+def main():
     # Title and sidebar setup
     st.title("Advanced Key Account Manager Training Tool")
-    #st.sidebar.title("Navigation")
-    #st.sidebar.markdown("Train on **advanced medical scenarios** for PNH, aHUS, and gMG.")
-    
+
     # Topic selection
     st.sidebar.subheader("Topics")
-    topics = list(scenarios.keys())
+    topics = list(scenarios.keys())  # Assuming scenarios are defined elsewhere
     selected_topic = st.sidebar.selectbox("Choose a topic:", topics)
-    
+
     # User login and collaboration
     st.sidebar.subheader("Collaborate")
     user_name = st.sidebar.text_input("Enter your name:", placeholder="Your Name")
@@ -306,18 +308,18 @@ def main():
     if st.session_state.shuffled_questions:
         if st.session_state.current_question_index < len(st.session_state.shuffled_questions):
             question_data = st.session_state.shuffled_questions[st.session_state.current_question_index]
-    
+
             # Display the current question
             st.subheader(f"📋 Clinician Question: {question_data['question']}")
             options = question_data["options"]
             user_answer = st.radio("Select your answer:", options)
-    
+
             # Submit button to check the answer
             if st.button("Submit Answer"):
                 if not st.session_state.show_next_question:
                     # Increment the question count
                     st.session_state.question_count += 1
-    
+
                     # Check if the user's answer is correct
                     is_correct = user_answer == question_data["answer"]
                     if is_correct:
@@ -325,7 +327,7 @@ def main():
                         st.session_state.score += 1
                     else:
                         st.error("❌ Incorrect. Keep improving!")
-    
+
                     # Append the question, user's answer, and feedback to the history
                     st.session_state.history.append({
                         "question": question_data["question"],
@@ -337,21 +339,21 @@ def main():
 
                     # Call the record_answer function to save the response to the file
                     record_answer_csv(
-                    user_name=user_name,
-                    topic=st.session_state.selected_topic,
-                    question=question_data["question"],
-                    user_answer=user_answer,
-                    correct_answer=question_data["answer"],
-                    is_correct=is_correct
+                        user_name=user_name,
+                        topic=st.session_state.selected_topic,
+                        question=question_data["question"],
+                        user_answer=user_answer,
+                        correct_answer=question_data["answer"],
+                        is_correct=is_correct
                     )
 
                     # Provide feedback
                     st.info(f"Feedback: {question_data['feedback']}")
                     st.info(f"The correct answer is: {question_data['answer']}")
-    
+
                     # Show the "Next Question" button
                     st.session_state.show_next_question = True
-    
+
             # Display the "Next Question" button after submission
             if st.session_state.show_next_question:
                 if st.button("Next Question"):
@@ -359,31 +361,25 @@ def main():
                     st.session_state.current_question_index += 1
                     st.session_state.show_next_question = False
 
-    # Display progress in the sidebar
-   # st.sidebar.subheader("📊 Progress")
-   # progress = st.session_state.score / max(1, st.session_state.question_count) * 100
-   # st.sidebar.progress(progress / 100)  # Display progress bar
-   # st.sidebar.markdown(f"**Score:** {st.session_state.score}/{st.session_state.question_count} correct")
+    # Update the leaderboard with the new score for the current user
+    leaderboard_entry = {"name": st.session_state.user_name, "score": st.session_state.score}
+    # Add or update the leaderboard
+    updated_leaderboard = [entry for entry in st.session_state.leaderboard if entry["name"] != st.session_state.user_name]
+    updated_leaderboard.append(leaderboard_entry)
+    # Sort leaderboard by score in descending order
+    st.session_state.leaderboard = sorted(updated_leaderboard, key=lambda x: x["score"], reverse=True)
 
-            # Update the leaderboard with the new score for the current user
-            leaderboard_entry = {"name": st.session_state.user_name, "score": st.session_state.score}
-            # Add or update the leaderboard
-            updated_leaderboard = [entry for entry in st.session_state.leaderboard if entry["name"] != st.session_state.user_name]
-            updated_leaderboard.append(leaderboard_entry)
-            # Sort leaderboard by score in descending order
-            st.session_state.leaderboard = sorted(updated_leaderboard, key=lambda x: x["score"], reverse=True)
-
-# Show the leaderboard in the sidebar
-st.sidebar.subheader("🏆 Leaderboard")
-for entry in st.session_state.leaderboard[:5]:  # Show top 5 players
-    st.sidebar.markdown(f"**{entry['name']}**: {entry['score']} points")
-if st.session_state.user_name:
-    st.sidebar.markdown(f"**{st.session_state.user_name}**: {st.session_state.score} points")
+    # Show the leaderboard in the sidebar
+    st.sidebar.subheader("🏆 Leaderboard")
+    for entry in st.session_state.leaderboard[:5]:  # Show top 5 players
+        st.sidebar.markdown(f"**{entry['name']}**: {entry['score']} points")
+    if st.session_state.user_name:
+        st.sidebar.markdown(f"**{st.session_state.user_name}**: {st.session_state.score} points")
 
     # Show question history if the user enables it in the sidebar
     if st.sidebar.checkbox("📜 Show Answer History"):
         st.subheader("Answer History")
-        
+
         # Check if there is any history to display
         if st.session_state.history:
             for idx, entry in enumerate(st.session_state.history, 1):
@@ -398,12 +394,12 @@ if st.session_state.user_name:
                     st.warning(f"Skipping invalid history entry at index {idx}.")
         else:
             st.info("No answers have been submitted yet.")
-            
 
     # Footer
     st.sidebar.markdown("---")
     st.sidebar.markdown("🔧 Created to enhance the training experience for Key Account Managers.")
     st.sidebar.markdown("**Version:** 1.0 | **Contact:** adrian.racovita@astrazeneca.com")
+
 # Run the app
 if __name__ == "__main__":
     main()
