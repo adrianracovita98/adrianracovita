@@ -243,15 +243,13 @@ def main():
     if "question_count" not in st.session_state:
         st.session_state.question_count = 0
     if "history" not in st.session_state:
-        st.session_state.history = []
+        st.session_state.history = []  # Always initialize history as an empty list
     if "current_question" not in st.session_state:
         st.session_state.current_question = None
     if "show_next_question" not in st.session_state:
         st.session_state.show_next_question = False
     if "selected_topic" not in st.session_state:
         st.session_state.selected_topic = None
-    if "timer_start" not in st.session_state:
-        st.session_state.timer_start = False
 
     # Title and sidebar setup
     st.title("Advanced Key Account Manager Training Tool")
@@ -365,14 +363,19 @@ def main():
       #      st.sidebar.markdown(f"**{entry['name']}**: {entry['score']} points")
 
     # Show question history if the user enables it in the sidebar
-    if st.sidebar.checkbox("Show Answer History"):
+    if st.sidebar.checkbox("📜 Show Answer History"):
         st.subheader("Answer History")
-        for idx, entry in enumerate(st.session_state.history, 1):
-            st.markdown(f"**Question {idx}:** {entry['question']}")
-            st.markdown(f"- **Your Answer:** {entry['your_answer']}")
-            st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
-            st.markdown(f"- **Feedback:** {entry['feedback']}")
-            st.markdown("---")
+        
+        # Check if there is any history to display
+        if st.session_state.history:
+            for idx, entry in enumerate(st.session_state.history, 1):
+                st.markdown(f"**Question {idx}:** {entry['question']}")
+                st.markdown(f"- **Your Answer:** {entry['your_answer']}")
+                st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
+                st.markdown(f"- **Feedback:** {entry['feedback']}")
+                st.markdown("---")
+        else:
+            st.info("No answers have been submitted yet.")
             
 
     # Footer
