@@ -315,26 +315,16 @@ def main():
                 # Append the question, user's answer, and feedback to the history
                 st.session_state.history.append({
                     "question": question_data["question"],
-                    "user_answer": user_answer,
+                    "your_answer": user_answer or "No answer submitted",  # Handle empty user answer
                     "correct_answer": question_data["answer"],
                     "feedback": question_data["feedback"],
                     "is_correct": is_correct
                 })
         
-                # Record the answer in the Excel log
-                record_answer(
-                    user_name=user_name,
-                    topic=st.session_state.selected_topic,
-                    question=question_data["question"],
-                    user_answer=user_answer,
-                    correct_answer=question_data["answer"],
-                    is_correct=is_correct
-                )
-
                 # Provide feedback
                 st.info(f"Feedback: {question_data['feedback']}")
                 st.info(f"The correct answer is: {question_data['answer']}")
-
+        
                 # Show the "Next Question" button
                 st.session_state.show_next_question = True
 
@@ -364,18 +354,22 @@ def main():
 
     # Show question history if the user enables it in the sidebar
     if st.sidebar.checkbox("📜 Show Answer History"):
-        st.subheader("Answer History")
-        
-        # Check if there is any history to display
-        if st.session_state.history:
-            for idx, entry in enumerate(st.session_state.history, 1):
+    st.subheader("Answer History")
+    
+    # Check if there is any history to display
+    if st.session_state.history:
+        for idx, entry in enumerate(st.session_state.history, 1):
+            # Validate required keys before accessing them
+            if all(key in entry for key in ["question", "your_answer", "correct_answer", "feedback"]):
                 st.markdown(f"**Question {idx}:** {entry['question']}")
                 st.markdown(f"- **Your Answer:** {entry['your_answer']}")
                 st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
                 st.markdown(f"- **Feedback:** {entry['feedback']}")
                 st.markdown("---")
-        else:
-            st.info("No answers have been submitted yet.")
+            else:
+                st.warning(f"Skipping invalid history entry at index {idx}.")
+    else:
+        st.info("No answers have been submitted yet.")
             
 
     # Footer
