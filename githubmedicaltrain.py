@@ -354,22 +354,22 @@ def main():
 
     # Show question history if the user enables it in the sidebar
     if st.sidebar.checkbox("📜 Show Answer History"):
-    st.subheader("Answer History")
-    
-    # Check if there is any history to display
-    if st.session_state.history:
-        for idx, entry in enumerate(st.session_state.history, 1):
-            # Validate required keys before accessing them
-            if all(key in entry for key in ["question", "your_answer", "correct_answer", "feedback"]):
-                st.markdown(f"**Question {idx}:** {entry['question']}")
-                st.markdown(f"- **Your Answer:** {entry['your_answer']}")
-                st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
-                st.markdown(f"- **Feedback:** {entry['feedback']}")
-                st.markdown("---")
-            else:
-                st.warning(f"Skipping invalid history entry at index {idx}.")
-    else:
-        st.info("No answers have been submitted yet.")
+        st.subheader("Answer History")
+        
+        # Check if there is any history to display
+        if st.session_state.history:
+            for idx, entry in enumerate(st.session_state.history, 1):
+                # Validate required keys before accessing them
+                if all(key in entry for key in ["question", "your_answer", "correct_answer", "feedback"]):
+                    st.markdown(f"**Question {idx}:** {entry['question']}")
+                    st.markdown(f"- **Your Answer:** {entry['your_answer']}")
+                    st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
+                    st.markdown(f"- **Feedback:** {entry['feedback']}")
+                    st.markdown("---")
+                else:
+                    st.warning(f"Skipping invalid history entry at index {idx}.")
+        else:
+            st.info("No answers have been submitted yet.")
             
 
     # Footer
