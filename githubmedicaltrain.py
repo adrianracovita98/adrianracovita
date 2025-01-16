@@ -326,7 +326,17 @@ def main():
                         "feedback": question_data["feedback"],
                         "is_correct": is_correct
                     })
-    
+
+                    # Call the record_answer function to save the response to the file
+                    record_answer(
+                        user_name=user_name,  # The name of the user
+                        topic=st.session_state.selected_topic,  # The selected topic (e.g., PNH)
+                        question=question_data["question"],  # The current question
+                        user_answer=user_answer,  # The user's selected answer
+                        correct_answer=question_data["answer"],  # The correct answer
+                        is_correct=is_correct  # Whether the user's answer was correct
+                    )
+
                     # Provide feedback
                     st.info(f"Feedback: {question_data['feedback']}")
                     st.info(f"The correct answer is: {question_data['answer']}")
