@@ -264,8 +264,8 @@ def main():
     if "selected_topic" not in st.session_state:
         st.session_state.selected_topic = None
     if "leaderboard" not in st.session_state:
-    st.session_state.leaderboard = [
-    ]
+        st.session_state.leaderboard = [
+        ]
 
     # Title and sidebar setup
     st.title("Advanced Key Account Manager Training Tool")
