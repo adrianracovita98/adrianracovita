@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 # Path to the Excel file for logging
-ANSWER_LOG_FILE = "answers_log.xlsx"
+ANSWER_LOG_FILE = "answers_log.csv"
 
 # Advanced clinician scenarios and questions for PNH, aHUS, and gMG
 scenarios = {
@@ -204,10 +204,9 @@ def initialize_answer_log():
         df.to_excel(ANSWER_LOG_FILE, index=False)
 
 
-# Function to record an answer in the Excel log
-def record_answer(user_name, topic, question, user_answer, correct_answer, is_correct):
+def record_answer_csv(user_name, topic, question, user_answer, correct_answer, is_correct):
     """
-    Record the user's answer in the Excel log file.
+    Record the user's answer in the CSV log file.
 
     Args:
         user_name (str): The name of the user.
@@ -217,11 +216,14 @@ def record_answer(user_name, topic, question, user_answer, correct_answer, is_co
         correct_answer (str): The correct answer.
         is_correct (bool): Whether the user's answer is correct.
     """
+    # Define the CSV file name
+    ANSWER_LOG_FILE = "answers_log.csv"
+
     # Define the column names
     columns = ["Timestamp", "User Name", "Topic", "Question", "User Answer", "Correct Answer", "Is Correct"]
 
-    # Create a new row as a DataFrame
-    new_row = pd.DataFrame([{
+    # Create a new row as a dictionary
+    new_row = {
         "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "User Name": user_name,
         "Topic": topic,
@@ -229,18 +231,18 @@ def record_answer(user_name, topic, question, user_answer, correct_answer, is_co
         "User Answer": user_answer,
         "Correct Answer": correct_answer,
         "Is Correct": is_correct
-    }])
+    }
 
     try:
-        # Check if the Excel file already exists
+        # Check if the CSV file already exists
         if os.path.exists(ANSWER_LOG_FILE):
-            # Load the existing file and append the new row
-            with pd.ExcelWriter(ANSWER_LOG_FILE, mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
-                new_row.to_excel(writer, header=False, index=False, startrow=writer.sheets["Sheet1"].max_row)
+            # Append the new row to the existing file
+            df = pd.DataFrame([new_row])
+            df.to_csv(ANSWER_LOG_FILE, mode="a", header=False, index=False)
         else:
-            # If the file doesn't exist, create it with the new row
-            new_row.to_excel(ANSWER_LOG_FILE, index=False, header=columns)
-
+            # Create a new CSV file with the header and the new row
+            df = pd.DataFrame([new_row])
+            df.to_csv(ANSWER_LOG_FILE, mode="w", header=columns, index=False)
     except Exception as e:
         st.error(f"An error occurred while saving the answer: {e}")
     
@@ -328,13 +330,13 @@ def main():
                     })
 
                     # Call the record_answer function to save the response to the file
-                    record_answer(
-                        user_name=user_name,  # The name of the user
-                        topic=st.session_state.selected_topic,  # The selected topic (e.g., PNH)
-                        question=question_data["question"],  # The current question
-                        user_answer=user_answer,  # The user's selected answer
-                        correct_answer=question_data["answer"],  # The correct answer
-                        is_correct=is_correct  # Whether the user's answer was correct
+                    record_answer_csv(
+                    user_name=user_name,
+                    topic=st.session_state.selected_topic,
+                    question=question_data["question"],
+                    user_answer=user_answer,
+                    correct_answer=question_data["answer"],
+                    is_correct=is_correct
                     )
 
                     # Provide feedback
