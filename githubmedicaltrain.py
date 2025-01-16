@@ -263,6 +263,9 @@ def main():
         st.session_state.show_next_question = False
     if "selected_topic" not in st.session_state:
         st.session_state.selected_topic = None
+    if "leaderboard" not in st.session_state:
+    st.session_state.leaderboard = [
+    ]
 
     # Title and sidebar setup
     st.title("Advanced Key Account Manager Training Tool")
@@ -359,14 +362,20 @@ def main():
    # st.sidebar.progress(progress / 100)  # Display progress bar
    # st.sidebar.markdown(f"**Score:** {st.session_state.score}/{st.session_state.question_count} correct")
 
-    # Leaderboard (mocked for now)
-    st.sidebar.subheader("🏆 Leaderboard")
-    leaderboard = [
-        {"name": f"{user_name}", "score": st.session_state.score} if user_name else None
-    ]
-    for entry in leaderboard:
-        if entry:
-            st.sidebar.markdown(f"**{entry['name']}**: {entry['score']} points")
+            # Update the leaderboard with the new score for the current user
+            leaderboard_entry = {"name": st.session_state.user_name, "score": st.session_state.score}
+            # Add or update the leaderboard
+            updated_leaderboard = [entry for entry in st.session_state.leaderboard if entry["name"] != st.session_state.user_name]
+            updated_leaderboard.append(leaderboard_entry)
+            # Sort leaderboard by score in descending order
+            st.session_state.leaderboard = sorted(updated_leaderboard, key=lambda x: x["score"], reverse=True)
+
+# Show the leaderboard in the sidebar
+st.sidebar.subheader("🏆 Leaderboard")
+for entry in st.session_state.leaderboard[:5]:  # Show top 5 players
+    st.sidebar.markdown(f"**{entry['name']}**: {entry['score']} points")
+if st.session_state.user_name:
+    st.sidebar.markdown(f"**{st.session_state.user_name}**: {st.session_state.score} points")
 
     # Show question history if the user enables it in the sidebar
     if st.sidebar.checkbox("📜 Show Answer History"):
