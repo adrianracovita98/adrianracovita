@@ -282,107 +282,90 @@ def get_randomized_questions(topic_questions):
 
 def main():
     # Initialize session state variables
-    if "score" not in st.session_state:
-        st.session_state.score = 0
-    if "question_count" not in st.session_state:
-        st.session_state.question_count = 0
-    if "history" not in st.session_state:
-        st.session_state.history = []  # Always initialize history as an empty list
-    if "current_question" not in st.session_state:
-        st.session_state.current_question = None
-    if "show_next_question" not in st.session_state:
-        st.session_state.show_next_question = False
-    if "selected_topic" not in st.session_state:
-        st.session_state.selected_topic = None
+    # Initialize session state variables for each user
+if "score" not in st.session_state:
+    st.session_state.score = 0  # Track score per user
+if "question_count" not in st.session_state:
+    st.session_state.question_count = 0  # Track question count per user
+if "history" not in st.session_state:
+    st.session_state.history = []  # Store answers per user
+if "current_question" not in st.session_state:
+    st.session_state.current_question = None
+if "show_next_question" not in st.session_state:
+    st.session_state.show_next_question = False
+if "selected_topic" not in st.session_state:
+    st.session_state.selected_topic = None
 
-    # Title and sidebar setup
-    st.title("Advanced Key Account Manager Training Tool")
-    #st.sidebar.title("Navigation")
-    #st.sidebar.markdown("Train on **advanced medical scenarios** for PNH, aHUS, and gMG.")
-    
-    # Topic selection
-    st.sidebar.subheader("Topics")
-    topics = list(scenarios.keys())
-    selected_topic = st.sidebar.selectbox("Choose a topic:", topics)
-    
-    # User login and collaboration
-    st.sidebar.subheader("Collaborate")
-    user_name = st.sidebar.text_input("Enter your name:", placeholder="Your Name")
-    if user_name:
-        st.sidebar.write(f"Welcome, **{user_name}**! Ready to challenge yourself?")
-        with st.sidebar.expander("💬 Leave a Comment"):
-            comment = st.text_area("Your comment", placeholder="Share your thoughts...")
-            if st.button("Submit Comment"):
-                st.sidebar.write(f"**{user_name} says:** {comment}")
+# Title and sidebar setup
+st.title("Advanced Key Account Manager Training Tool")
 
-    # Reset when the topic changes
-    if selected_topic != st.session_state.selected_topic:
-        st.session_state.selected_topic = selected_topic
-        st.session_state.shuffled_questions = random.sample(
-            scenarios[selected_topic], len(scenarios[selected_topic])
-        )  # Shuffle the questions for the new topic
-        st.session_state.current_question_index = 0  # Reset the question index
-        st.session_state.history = []  # Clear the history for the new topic
-        st.session_state.score = 0  # Reset the score
-        st.session_state.question_count = 0  # Reset the question count
-        st.session_state.show_next_question = False
+# Topic selection
+st.sidebar.subheader("Topics")
+topics = ["Topic 1", "Topic 2", "Topic 3"]  # Replace with actual topics
+selected_topic = st.sidebar.selectbox("Choose a topic:", topics)
 
-    # Display a random question from the selected topic
-    if st.session_state.shuffled_questions:
-        if st.session_state.current_question_index < len(st.session_state.shuffled_questions):
-            question_data = st.session_state.shuffled_questions[st.session_state.current_question_index]
-    
-            # Display the current question
-            st.subheader(f"📋 Clinician Question: {question_data['question']}")
-            options = question_data["options"]
-            user_answer = st.radio("Select your answer:", options)
-    
-            # Submit button to check the answer
-            if st.button("Submit Answer"):
-                if not st.session_state.show_next_question:
-                    # Increment the question count
-                    st.session_state.question_count += 1
-    
-                    # Check if the user's answer is correct
-                    is_correct = user_answer == question_data["answer"]
-                    if is_correct:
-                        st.success("✅ Correct! Great job!")
-                        st.session_state.score += 1
-                    else:
-                        st.error("❌ Incorrect. Keep improving!")
-    
-                    # Append the question, user's answer, and feedback to the history
-                    st.session_state.history.append({
-                        "question": question_data["question"],
-                        "your_answer": user_answer,
-                        "correct_answer": question_data["answer"],
-                        "feedback": question_data["feedback"],
-                        "is_correct": is_correct
-                    })
+# User login and collaboration
+st.sidebar.subheader("Collaborate")
+user_name = st.sidebar.text_input("Enter your name:", placeholder="Your Name")
+if user_name:
+    st.sidebar.write(f"Welcome, **{user_name}**! Ready to challenge yourself?")
 
-                    # Save the response to the JSON file
-                    record_answer_json(
-                        user_name=user_name,
-                        topic=st.session_state.selected_topic,
-                        question=question_data["question"],
-                        user_answer=user_answer,
-                        correct_answer=question_data["answer"],
-                        is_correct=is_correct
-                    )
+# Display the selected topic
+st.write(f"Selected Topic: {selected_topic}")
 
-                    # Provide feedback
-                    st.info(f"Feedback: {question_data['feedback']}")
-                    st.info(f"The correct answer is: {question_data['answer']}")
+# Sample question data (for demonstration)
+questions = [
+    {"question": "What is 2 + 2?", "options": ["3", "4", "5"], "answer": "4", "feedback": "Simple math question."},
+    {"question": "What is the capital of France?", "options": ["Berlin", "Madrid", "Paris"], "answer": "Paris", "feedback": "Capital of France."}
+]
+
+# Display a random question from the selected topic
+if questions:
+    if st.session_state.current_question is None:
+        st.session_state.current_question = random.choice(questions)  # Show a random question
     
-                    # Show the "Next Question" button
-                    st.session_state.show_next_question = True
-    
-            # Display the "Next Question" button after submission
-            if st.session_state.show_next_question:
-                if st.button("Next Question"):
-                    # Move to the next question
-                    st.session_state.current_question_index += 1
-                    st.session_state.show_next_question = False
+    # Display the current question
+    st.subheader(f"📋 Question: {st.session_state.current_question['question']}")
+    options = st.session_state.current_question["options"]
+    user_answer = st.radio("Select your answer:", options)
+
+    # Submit button to check the answer
+    if st.button("Submit Answer"):
+        # Check if the user's answer is correct
+        is_correct = user_answer == st.session_state.current_question["answer"]
+        
+        # Update the score
+        if is_correct:
+            st.success("✅ Correct! Great job!")
+            st.session_state.score += 1  # Increment score if correct
+        else:
+            st.error("❌ Incorrect. Keep improving!")
+        
+        # Store the user's answer and feedback in history
+        st.session_state.history.append({
+            "user_name": user_name,
+            "question": st.session_state.current_question["question"],
+            "your_answer": user_answer,
+            "correct_answer": st.session_state.current_question["answer"],
+            "feedback": st.session_state.current_question["feedback"],
+            "is_correct": is_correct
+        })
+
+        # Show the "Next Question" button
+        st.session_state.show_next_question = True
+
+    # Display the "Next Question" button after submission
+    if st.session_state.show_next_question:
+        if st.button("Next Question"):
+            # Show next question (reset question)
+            st.session_state.current_question = random.choice(questions)
+            st.session_state.show_next_question = False
+
+# Show current score and history for the user
+if user_name:
+    st.write(f"**Your current score**: {st.session_state.score}")
+    st.write("**Your answer history**:")
+    st.write(st.session_state.history)
 
     # Show question history if the user enables it in the sidebar
     if st.sidebar.checkbox("📜 Show Answer History"):
