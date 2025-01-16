@@ -3,7 +3,6 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
-import json
 
 # Path to the Excel file for logging
 ANSWER_LOG_FILE = "answers_log.csv"
@@ -246,62 +245,33 @@ def record_answer_csv(user_name, topic, question, user_answer, correct_answer, i
             df.to_csv(ANSWER_LOG_FILE, mode="w", header=columns, index=False)
     except Exception as e:
         st.error(f"An error occurred while saving the answer: {e}")
-
-# Function to save responses to a JSON file
-def record_answer_json(user_name, topic, question, user_answer, correct_answer, is_correct):
-    # Define the file path
-    JSON_FILE = "user_responses.json"
-    
-    # Load existing data or initialize an empty list if file doesn't exist
-    try:
-        with open(JSON_FILE, 'r') as f:
-            responses = json.load(f)
-    except FileNotFoundError:
-        responses = []
-
-    # Prepare the new answer entry
-    response_data = {
-        "user_name": user_name,
-        "topic": topic,
-        "question": question,
-        "your_answer": user_answer,
-        "correct_answer": correct_answer,
-        "is_correct": is_correct,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Add timestamp
-    }
-    
-    # Append the new response to the existing list
-    responses.append(response_data)
-
-    # Save the updated responses to the JSON file
-    with open(JSON_FILE, 'w') as f:
-        json.dump(responses, f, indent=4)
     
 def get_randomized_questions(topic_questions):
     return random.sample(topic_questions, len(topic_questions))
 
 def main():
     # Initialize session state variables
-    # Initialize session state variables for each user
     if "score" not in st.session_state:
-        st.session_state.score = 0  # Track score per user
+        st.session_state.score = 0
     if "question_count" not in st.session_state:
-        st.session_state.question_count = 0  # Track question count per user
+        st.session_state.question_count = 0
     if "history" not in st.session_state:
-        st.session_state.history = []  # Store answers per user
+        st.session_state.history = []  # Always initialize history as an empty list
     if "current_question" not in st.session_state:
         st.session_state.current_question = None
     if "show_next_question" not in st.session_state:
         st.session_state.show_next_question = False
     if "selected_topic" not in st.session_state:
         st.session_state.selected_topic = None
-    
+
     # Title and sidebar setup
     st.title("Advanced Key Account Manager Training Tool")
+    #st.sidebar.title("Navigation")
+    #st.sidebar.markdown("Train on **advanced medical scenarios** for PNH, aHUS, and gMG.")
     
     # Topic selection
     st.sidebar.subheader("Topics")
-    topics = ["Topic 1", "Topic 2", "Topic 3"]  # Replace with actual topics
+    topics = list(scenarios.keys())
     selected_topic = st.sidebar.selectbox("Choose a topic:", topics)
     
     # User login and collaboration
@@ -309,82 +279,115 @@ def main():
     user_name = st.sidebar.text_input("Enter your name:", placeholder="Your Name")
     if user_name:
         st.sidebar.write(f"Welcome, **{user_name}**! Ready to challenge yourself?")
-    
-    # Display the selected topic
-    st.write(f"Selected Topic: {selected_topic}")
-    
-    # Sample question data (for demonstration)
-    questions = [
-        {"question": "What is 2 + 2?", "options": ["3", "4", "5"], "answer": "4", "feedback": "Simple math question."},
-        {"question": "What is the capital of France?", "options": ["Berlin", "Madrid", "Paris"], "answer": "Paris", "feedback": "Capital of France."}
-    ]
-    
+        with st.sidebar.expander("💬 Leave a Comment"):
+            comment = st.text_area("Your comment", placeholder="Share your thoughts...")
+            if st.button("Submit Comment"):
+                st.sidebar.write(f"**{user_name} says:** {comment}")
+
+    # Reset when the topic changes
+    if selected_topic != st.session_state.selected_topic:
+        st.session_state.selected_topic = selected_topic
+        st.session_state.shuffled_questions = random.sample(
+            scenarios[selected_topic], len(scenarios[selected_topic])
+        )  # Shuffle the questions for the new topic
+        st.session_state.current_question_index = 0  # Reset the question index
+        st.session_state.history = []  # Clear the history for the new topic
+        st.session_state.score = 0  # Reset the score
+        st.session_state.question_count = 0  # Reset the question count
+        st.session_state.show_next_question = False
+
     # Display a random question from the selected topic
-    if questions:
-        if st.session_state.current_question is None:
-            st.session_state.current_question = random.choice(questions)  # Show a random question
-        
-        # Display the current question
-        st.subheader(f"📋 Question: {st.session_state.current_question['question']}")
-        options = st.session_state.current_question["options"]
-        user_answer = st.radio("Select your answer:", options)
+    if st.session_state.shuffled_questions:
+        if st.session_state.current_question_index < len(st.session_state.shuffled_questions):
+            question_data = st.session_state.shuffled_questions[st.session_state.current_question_index]
     
-        # Submit button to check the answer
-        if st.button("Submit Answer"):
-            # Check if the user's answer is correct
-            is_correct = user_answer == st.session_state.current_question["answer"]
-            
-            # Update the score
-            if is_correct:
-                st.success("✅ Correct! Great job!")
-                st.session_state.score += 1  # Increment score if correct
-            else:
-                st.error("❌ Incorrect. Keep improving!")
-            
-            # Store the user's answer and feedback in history
-            st.session_state.history.append({
-                "user_name": user_name,
-                "question": st.session_state.current_question["question"],
-                "your_answer": user_answer,
-                "correct_answer": st.session_state.current_question["answer"],
-                "feedback": st.session_state.current_question["feedback"],
-                "is_correct": is_correct
-            })
+            # Display the current question
+            st.subheader(f"📋 Clinician Question: {question_data['question']}")
+            options = question_data["options"]
+            user_answer = st.radio("Select your answer:", options)
     
-            # Show the "Next Question" button
-            st.session_state.show_next_question = True
+            # Submit button to check the answer
+            if st.button("Submit Answer"):
+                if not st.session_state.show_next_question:
+                    # Increment the question count
+                    st.session_state.question_count += 1
     
-        # Display the "Next Question" button after submission
-        if st.session_state.show_next_question:
-            if st.button("Next Question"):
-                # Show next question (reset question)
-                st.session_state.current_question = random.choice(questions)
-                st.session_state.show_next_question = False
-    
-    # Show current score and history for the user
-    if user_name:
-        st.write(f"**Your current score**: {st.session_state.score}")
-        st.write("**Your answer history**:")
-        st.write(st.session_state.history)
-    
-        # Show question history if the user enables it in the sidebar
-        if st.sidebar.checkbox("📜 Show Answer History"):
-            st.subheader("Answer History")
-            
-            # Check if there is any history to display
-            if st.session_state.history:
-                for idx, entry in enumerate(st.session_state.history, 1):
-                    # Validate required keys before accessing them
-                    if all(key in entry for key in ["question", "your_answer", "correct_answer", "feedback"]):
-                        st.markdown(f"**Question {idx}:** {entry['question']}")
-                        st.markdown(f"- **Your Answer:** {entry['your_answer']}")
-                        st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
-                        st.markdown(f"- **Feedback:** {entry['feedback']}")
-                        st.markdown("---")
+                    # Check if the user's answer is correct
+                    is_correct = user_answer == question_data["answer"]
+                    if is_correct:
+                        st.success("✅ Correct! Great job!")
+                        st.session_state.score += 1
                     else:
-                        st.warning(f"Skipping invalid history entry at index {idx}.")
-            else:
-                st.info("No answers have been submitted yet.")
+                        st.error("❌ Incorrect. Keep improving!")
+    
+                    # Append the question, user's answer, and feedback to the history
+                    st.session_state.history.append({
+                        "question": question_data["question"],
+                        "your_answer": user_answer,
+                        "correct_answer": question_data["answer"],
+                        "feedback": question_data["feedback"],
+                        "is_correct": is_correct
+                    })
+
+                    # Call the record_answer function to save the response to the file
+                    record_answer_csv(
+                    user_name=user_name,
+                    topic=st.session_state.selected_topic,
+                    question=question_data["question"],
+                    user_answer=user_answer,
+                    correct_answer=question_data["answer"],
+                    is_correct=is_correct
+                    )
+
+                    # Provide feedback
+                    st.info(f"Feedback: {question_data['feedback']}")
+                    st.info(f"The correct answer is: {question_data['answer']}")
+    
+                    # Show the "Next Question" button
+                    st.session_state.show_next_question = True
+    
+            # Display the "Next Question" button after submission
+            if st.session_state.show_next_question:
+                if st.button("Next Question"):
+                    # Move to the next question
+                    st.session_state.current_question_index += 1
+                    st.session_state.show_next_question = False
+
+    # Display progress in the sidebar
+   # st.sidebar.subheader("📊 Progress")
+   # progress = st.session_state.score / max(1, st.session_state.question_count) * 100
+   # st.sidebar.progress(progress / 100)  # Display progress bar
+   # st.sidebar.markdown(f"**Score:** {st.session_state.score}/{st.session_state.question_count} correct")
+
+    # Leaderboard (mocked for now)
+    st.sidebar.subheader("🏆 Leaderboard")
+    leaderboard = [
+        {"name": "Alice", "score": 8},
+        {"name": "Bob", "score": 7},
+        {"name": f"{user_name}", "score": st.session_state.score} if user_name else None
+    ]
+    for entry in leaderboard:
+        if entry:
+            st.sidebar.markdown(f"**{entry['name']}**: {entry['score']} points")
+
+    # Show question history if the user enables it in the sidebar
+    if st.sidebar.checkbox("📜 Show Answer History"):
+        st.subheader("Answer History")
+        
+        # Check if there is any history to display
+        if st.session_state.history:
+            for idx, entry in enumerate(st.session_state.history, 1):
+                # Validate required keys before accessing them
+                if all(key in entry for key in ["question", "your_answer", "correct_answer", "feedback"]):
+                    st.markdown(f"**Question {idx}:** {entry['question']}")
+                    st.markdown(f"- **Your Answer:** {entry['your_answer']}")
+                    st.markdown(f"- **Correct Answer:** {entry['correct_answer']}")
+                    st.markdown(f"- **Feedback:** {entry['feedback']}")
+                    st.markdown("---")
+                else:
+                    st.warning(f"Skipping invalid history entry at index {idx}.")
+        else:
+            st.info("No answers have been submitted yet.")
             
 
     # Footer
