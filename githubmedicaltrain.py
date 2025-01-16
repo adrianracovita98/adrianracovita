@@ -3,6 +3,7 @@ import streamlit as st
 import pandas as pd
 import os
 from datetime import datetime
+import json
 
 # Path to the Excel file for logging
 ANSWER_LOG_FILE = "answers_log.csv"
@@ -245,6 +246,36 @@ def record_answer_csv(user_name, topic, question, user_answer, correct_answer, i
             df.to_csv(ANSWER_LOG_FILE, mode="w", header=columns, index=False)
     except Exception as e:
         st.error(f"An error occurred while saving the answer: {e}")
+
+# Function to save responses to a JSON file
+def record_answer_json(user_name, topic, question, user_answer, correct_answer, is_correct):
+    # Define the file path
+    JSON_FILE = "user_responses.json"
+    
+    # Load existing data or initialize an empty list if file doesn't exist
+    try:
+        with open(JSON_FILE, 'r') as f:
+            responses = json.load(f)
+    except FileNotFoundError:
+        responses = []
+
+    # Prepare the new answer entry
+    response_data = {
+        "user_name": user_name,
+        "topic": topic,
+        "question": question,
+        "your_answer": user_answer,
+        "correct_answer": correct_answer,
+        "is_correct": is_correct,
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Add timestamp
+    }
+    
+    # Append the new response to the existing list
+    responses.append(response_data)
+
+    # Save the updated responses to the JSON file
+    with open(JSON_FILE, 'w') as f:
+        json.dump(responses, f, indent=4)
     
 def get_randomized_questions(topic_questions):
     return random.sample(topic_questions, len(topic_questions))
@@ -329,14 +360,14 @@ def main():
                         "is_correct": is_correct
                     })
 
-                    # Call the record_answer function to save the response to the file
-                    record_answer_csv(
-                    user_name=user_name,
-                    topic=st.session_state.selected_topic,
-                    question=question_data["question"],
-                    user_answer=user_answer,
-                    correct_answer=question_data["answer"],
-                    is_correct=is_correct
+                    # Save the response to the JSON file
+                    record_answer_json(
+                        user_name=user_name,
+                        topic=st.session_state.selected_topic,
+                        question=question_data["question"],
+                        user_answer=user_answer,
+                        correct_answer=question_data["answer"],
+                        is_correct=is_correct
                     )
 
                     # Provide feedback
@@ -352,23 +383,6 @@ def main():
                     # Move to the next question
                     st.session_state.current_question_index += 1
                     st.session_state.show_next_question = False
-
-    # Display progress in the sidebar
-   # st.sidebar.subheader("📊 Progress")
-   # progress = st.session_state.score / max(1, st.session_state.question_count) * 100
-   # st.sidebar.progress(progress / 100)  # Display progress bar
-   # st.sidebar.markdown(f"**Score:** {st.session_state.score}/{st.session_state.question_count} correct")
-
-    # Leaderboard (mocked for now)
-    #st.sidebar.subheader("🏆 Leaderboard")
-    #leaderboard = [
-     #   {"name": "Alice", "score": 8},
-      #  {"name": "Bob", "score": 7},
-       # {"name": f"{user_name}", "score": st.session_state.score} if user_name else None
-    #]
-    #for entry in leaderboard:
-     #   if entry:
-      #      st.sidebar.markdown(f"**{entry['name']}**: {entry['score']} points")
 
     # Show question history if the user enables it in the sidebar
     if st.sidebar.checkbox("📜 Show Answer History"):
