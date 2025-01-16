@@ -234,12 +234,12 @@ def record_answer(user_name, topic, question, user_answer, correct_answer, is_co
     try:
         # Check if the Excel file already exists
         if os.path.exists(ANSWER_LOG_FILE):
-            # Open the existing file and append the new row
+            # Load the existing file and append the new row
             with pd.ExcelWriter(ANSWER_LOG_FILE, mode="a", engine="openpyxl", if_sheet_exists="overlay") as writer:
                 new_row.to_excel(writer, header=False, index=False, startrow=writer.sheets["Sheet1"].max_row)
         else:
-            # Write a new Excel file with the new row
-            new_row.to_excel(ANSWER_LOG_FILE, index=False)
+            # If the file doesn't exist, create it with the new row
+            new_row.to_excel(ANSWER_LOG_FILE, index=False, header=columns)
 
     except Exception as e:
         st.error(f"An error occurred while saving the answer: {e}")
