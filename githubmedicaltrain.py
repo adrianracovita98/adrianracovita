@@ -362,8 +362,6 @@ def main():
     # Leaderboard (mocked for now)
     st.sidebar.subheader("🏆 Leaderboard")
     leaderboard = [
-        {"name": "Alice", "score": 8},
-        {"name": "Bob", "score": 7},
         {"name": f"{user_name}", "score": st.session_state.score} if user_name else None
     ]
     for entry in leaderboard:
