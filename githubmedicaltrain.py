@@ -264,8 +264,11 @@ def main():
     if "selected_topic" not in st.session_state:
         st.session_state.selected_topic = None
     if "leaderboard" not in st.session_state:
+    # Initialize leaderboard with mock data or an empty list
         st.session_state.leaderboard = [
-        ]
+            {"name": "Alice", "score": 8},
+            {"name": "Bob", "score": 7}
+        ] 
 
     # Title and sidebar setup
     st.title("Advanced Key Account Manager Training Tool")
